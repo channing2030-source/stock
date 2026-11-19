@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -55,8 +54,8 @@
 <body class="min-h-screen flex flex-col pb-10">
 
     <!-- 0. 頂部品牌標題列：量化視界 -->
-    <nav class="bg-[#0d121d] border-b border-slate-800/80 px-4 py-2.5 shadow-sm">
-        <div class="max-w-4xl mx-auto flex items-center justify-between">
+    <nav class="bg-[#0f172a] border-b border-slate-800/80 px-4 py-2.5 shadow-sm">
+        <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-2">
             <div class="flex items-center gap-3 select-none">
                 <!-- 深海藍圓角方形折線圖徽章 -->
                 <div class="w-9 h-9 rounded-[10px] bg-[#132240] border-[1.5px] border-[#2563eb] flex items-center justify-center shadow-[0_0_12px_rgba(37,99,235,0.28)] shrink-0">
@@ -67,11 +66,19 @@
                 </div>
                 <div class="flex items-baseline gap-2.5">
                     <span class="text-white text-[20px] font-bold tracking-wide leading-none">量化視界</span>
-                    <span class="hidden sm:inline-block text-[11px] font-medium text-blue-300/80 tracking-wider">QuantVision · 智能量化分析終端</span>
+                    <span class="hidden sm:inline-block text-[11px] font-medium text-blue-300/80 tracking-wider">QuantVision · 低延遲多維度分析終端</span>
                 </div>
             </div>
-            <div class="text-[11px] text-slate-400 hidden xs:block sm:block">
-                <i class="fa-solid fa-wave-square text-blue-400 mr-1"></i>多維度行情與資金流引擎
+            <!-- 右側實時連線狀態與 15 秒自動刷新開關 -->
+            <div class="flex items-center gap-3 text-[11px]">
+                <span id="liveConnStatus" class="flex items-center gap-1.5 text-emerald-400 font-medium">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>實時連線中</span>
+                </span>
+                <label class="flex items-center gap-1.5 text-slate-300 cursor-pointer bg-slate-800/90 hover:bg-slate-800 px-2.5 py-1 rounded border border-slate-700 select-none">
+                    <input type="checkbox" id="autoRefreshToggle" checked class="accent-blue-500 w-3.5 h-3.5 cursor-pointer">
+                    <span>自動刷新 15s</span>
+                </label>
             </div>
         </div>
     </nav>
@@ -81,16 +88,30 @@
         <div class="max-w-4xl mx-auto flex flex-col items-center">
             <!-- 居中白色控制面板 -->
             <form id="searchForm" class="w-full flex flex-wrap sm:flex-nowrap items-center justify-center gap-2">
-                <!-- 股票代號輸入框 -->
-                <input
-                    type="text"
-                    id="symbolInput"
-                    value="002060"
-                    placeholder="輸入股票代號 (如 002060, NVDA)"
-                    class="w-full sm:flex-1 max-w-md bg-white text-gray-800 text-sm font-medium px-3.5 py-2 rounded border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300 uppercase"
-                >
+                <!-- 股票代號/中文名稱輸入框 + 即時搜尋建議下拉選單 -->
+                <div class="relative w-full sm:flex-1 max-w-md">
+                    <div class="relative flex items-center">
+                        <i class="fa-solid fa-magnifying-glass text-gray-400 text-xs absolute left-3 pointer-events-none"></i>
+                        <input
+                            type="text"
+                            id="symbolInput"
+                            value="002060"
+                            autocomplete="off"
+                            placeholder="輸入代號或名稱 (如 002060, 騰訊, 台積電, NVDA)"
+                            class="w-full bg-white text-gray-800 text-sm font-medium pl-8 pr-8 py-2 rounded border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                        >
+                        <button type="button" id="clearInputBtn" title="清除輸入" class="hidden absolute right-2.5 text-gray-400 hover:text-gray-600 text-xs cursor-pointer">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </button>
+                    </div>
+                    <!-- 自動補全下拉選單 -->
+                    <div id="searchDropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-xl z-50 max-h-64 overflow-y-auto divide-y divide-gray-100 text-left">
+                        <!-- JS 動態渲染候選標的 -->
+                    </div>
+                </div>
                 <!-- 市場下拉選單 -->
                 <select id="marketSelect" class="bg-white text-gray-800 text-sm font-medium px-3 py-2 rounded border border-gray-200 shadow-sm focus:outline-none cursor-pointer">
+                    <option value="ALL">全部市場</option>
                     <option value="CN" selected>A股</option>
                     <option value="HK">港股</option>
                     <option value="US">美股</option>
@@ -116,9 +137,9 @@
             <!-- 底部小字提示與自選股快捷列 -->
             <div class="w-full max-w-4xl mt-2 flex flex-wrap items-center justify-between gap-2 text-white/90 text-xs">
                 <div class="flex items-center gap-1.5 mx-auto sm:mx-0">
-                    <i class="fa-solid fa-circle-info"></i>
-                    <span>可選擇市場與歷史日期</span>
-                    <span id="dataSourceBadge" class="ml-2 px-2 py-0.5 rounded bg-white/15 text-[11px]">Yahoo Finance 數據源</span>
+                    <i class="fa-solid fa-bolt text-amber-300"></i>
+                    <span>支援中文名稱與代號模糊檢索</span>
+                    <span id="dataSourceBadge" class="ml-1.5 px-2 py-0.5 rounded bg-white/15 text-[11px] font-medium">Yahoo Finance 雙流引擎</span>
                 </div>
                 <!-- 自選股快捷標籤列 -->
                 <div id="watchlistBar" class="flex items-center gap-1.5 flex-wrap justify-center mx-auto sm:mx-0">
@@ -338,15 +359,20 @@
 
     <script>
         // ==========================================
-        // 1. 狀態管理與內建擬真股票資料庫
+        // 1. 狀態管理、內建精準代號字典與預設基本面庫
         // ==========================================
         const state = {
             rawSymbol: '002060',
+            resolvedYahooTicker: '002060.SZ',
+            resolvedName: '粵水電',
             market: 'CN',
             mode: 'realtime',
             historyDate: '',
             range: '6mo',
-            watchlist: JSON.parse(localStorage.getItem('finanalyzer_watchlist') || '[{"symbol":"002060","market":"CN","label":"002060 粵水電"},{"symbol":"NVDA","market":"US","label":"NVDA 輝達"},{"symbol":"2330","market":"TW","label":"2330 台積電"},{"symbol":"0700","market":"HK","label":"0700 騰訊"}]'),
+            autoRefresh: true,
+            refreshTimer: null,
+            searchDebounceTimer: null,
+            watchlist: JSON.parse(localStorage.getItem('quantvision_watchlist_v2') || '[{"symbol":"002060","ticker":"002060.SZ","market":"CN","label":"002060 粵水電"},{"symbol":"0700","ticker":"0700.HK","market":"HK","label":"0700 騰訊控股"},{"symbol":"2330","ticker":"2330.TW","market":"TW","label":"2330 台積電"},{"symbol":"NVDA","ticker":"NVDA","market":"US","label":"NVDA 輝達"}]'),
             charts: {
                 price: null,
                 volume: null,
@@ -355,11 +381,43 @@
         };
 
         const MARKET_META = {
-            CN: { label: 'A股', sub: '中國市場 • 深圳/上海證券交易所', currency: 'CNY', sym: '¥' },
+            ALL: { label: '全市場', sub: '全球多市場 • 自動識別交易所', currency: 'USD', sym: '$' },
+            CN: { label: 'A股', sub: '中國市場 • 深圳/上海/北京交易所', currency: 'CNY', sym: '¥' },
             HK: { label: '港股', sub: '香港市場 • 香港聯合交易所', currency: 'HKD', sym: 'HK$' },
             US: { label: '美股', sub: '美國市場 • NASDAQ / NYSE', currency: 'USD', sym: '$' },
             TW: { label: '台股', sub: '台灣市場 • 台灣證券交易所', currency: 'TWD', sym: 'NT$' }
         };
+
+        // 高頻中英文名稱與精準 Yahoo 代號映射字典（確保離線或輸入中文時秒級精準定位）
+        const SYMBOL_DIRECTORY = [
+            { raw: '002060', ticker: '002060.SZ', name: '粵水電 (廣東建工)', market: 'CN', exchange: '深交所' },
+            { raw: '600519', ticker: '600519.SS', name: '貴州茅台', market: 'CN', exchange: '上交所' },
+            { raw: '002594', ticker: '002594.SZ', name: '比亞迪', market: 'CN', exchange: '深交所' },
+            { raw: '300750', ticker: '300750.SZ', name: '寧德時代', market: 'CN', exchange: '創業板' },
+            { raw: '601318', ticker: '601318.SS', name: '中國平安', market: 'CN', exchange: '上交所' },
+            { raw: '000001', ticker: '000001.SZ', name: '平安銀行', market: 'CN', exchange: '深交所' },
+            { raw: '000001.SS', ticker: '000001.SS', name: '上證綜合指數', market: 'CN', exchange: '上交所指數' },
+            { raw: '0700', ticker: '0700.HK', name: '騰訊控股 Tencent', market: 'HK', exchange: '港交所' },
+            { raw: '9988', ticker: '9988.HK', name: '阿里巴巴-W Alibaba', market: 'HK', exchange: '港交所' },
+            { raw: '3690', ticker: '3690.HK', name: '美團-W Meituan', market: 'HK', exchange: '港交所' },
+            { raw: '1810', ticker: '1810.HK', name: '小米集團-W Xiaomi', market: 'HK', exchange: '港交所' },
+            { raw: '1211', ticker: '1211.HK', name: '比亞迪股份 BYD', market: 'HK', exchange: '港交所' },
+            { raw: '0941', ticker: '0941.HK', name: '中國移動 China Mobile', market: 'HK', exchange: '港交所' },
+            { raw: '0005', ticker: '0005.HK', name: '匯豐控股 HSBC', market: 'HK', exchange: '港交所' },
+            { raw: '2330', ticker: '2330.TW', name: '台積電 TSMC', market: 'TW', exchange: '台交所' },
+            { raw: '2317', ticker: '2317.TW', name: '鴻海 Foxconn', market: 'TW', exchange: '台交所' },
+            { raw: '2454', ticker: '2454.TW', name: '聯發科 MediaTek', market: 'TW', exchange: '台交所' },
+            { raw: '2382', ticker: '2382.TW', name: '廣達 Quanta', market: 'TW', exchange: '台交所' },
+            { raw: '0050', ticker: '0050.TW', name: '元大台灣50 ETF', market: 'TW', exchange: '台交所' },
+            { raw: 'NVDA', ticker: 'NVDA', name: 'NVIDIA 輝達', market: 'US', exchange: 'NASDAQ' },
+            { raw: 'AAPL', ticker: 'AAPL', name: 'Apple 蘋果', market: 'US', exchange: 'NASDAQ' },
+            { raw: 'TSLA', ticker: 'TSLA', name: 'Tesla 特斯拉', market: 'US', exchange: 'NASDAQ' },
+            { raw: 'MSFT', ticker: 'MSFT', name: 'Microsoft 微軟', market: 'US', exchange: 'NASDAQ' },
+            { raw: 'GOOGL', ticker: 'GOOGL', name: 'Alphabet 谷歌', market: 'US', exchange: 'NASDAQ' },
+            { raw: 'AMZN', ticker: 'AMZN', name: 'Amazon 亞馬遜', market: 'US', exchange: 'NASDAQ' },
+            { raw: 'META', ticker: 'META', name: 'Meta Platforms', market: 'US', exchange: 'NASDAQ' },
+            { raw: 'TSM', ticker: 'TSM', name: 'TSMC ADR 台積電美股', market: 'US', exchange: 'NYSE' }
+        ];
 
         const PRESET_DB = {
             '002060.SZ': {
@@ -399,51 +457,91 @@
             }
         };
 
-        // 自動根據市場補全 Yahoo Finance 後綴
+        // 精準股票代號正規化規則（支援 A股 60/68/00/30/8/4、港股 4位補零、台股及完整後綴）
         function normalizeYahooSymbol(raw, market) {
             const clean = raw.trim().toUpperCase();
-            if (clean.includes('.')) return clean;
+            if (!clean) return '002060.SZ';
+
+            // 若使用者已輸入完整 Yahoo 後綴（如 .SS, .SZ, .HK, .TW, .TWO, .BJ）
+            if (/\.(SS|SZ|BJ|HK|TW|TWO)$/i.test(clean)) {
+                if (clean.endsWith('.HK')) {
+                    const code = clean.replace('.HK', '');
+                    return `${/^\d+$/.test(code) ? code.padStart(4, '0') : code}.HK`;
+                }
+                return clean;
+            }
+
+            // 檢查內建精準字典是否直接命中代號或中文名稱
+            const dictHit = SYMBOL_DIRECTORY.find(item =>
+                (market === 'ALL' || item.market === market) &&
+                (item.raw.toUpperCase() === clean || item.ticker.toUpperCase() === clean || item.name.toUpperCase().includes(clean))
+            );
+            if (dictHit) return dictHit.ticker;
+
+            // 依選定市場執行精準交易所前綴規則
             if (market === 'CN') {
+                if (/^(60|68|900)\d{3,4}$/.test(clean)) return `${clean}.SS`;
+                if (/^(00|30|200)\d{3,4}$/.test(clean)) return `${clean}.SZ`;
+                if (/^(8|4|920)\d{4,5}$/.test(clean)) return `${clean}.BJ`;
                 return clean.startsWith('6') ? `${clean}.SS` : `${clean}.SZ`;
             }
             if (market === 'HK') {
-                const padded = /^\d+$/.test(clean) && clean.length < 4 ? clean.padStart(4, '0') : clean;
-                return `${padded}.HK`;
+                const digits = clean.replace(/^0+/, '') || '0';
+                return `${/^\d+$/.test(digits) ? digits.padStart(4, '0') : clean}.HK`;
             }
             if (market === 'TW') {
                 return `${clean}.TW`;
             }
+            if (market === 'ALL') {
+                // 全市場自動推斷：6位純數字優先判定 A股，4位純數字判定港股/台股
+                if (/^(60|68)\d{4}$/.test(clean)) return `${clean}.SS`;
+                if (/^(00|30)\d{4}$/.test(clean)) return `${clean}.SZ`;
+                if (/^\d{4}$/.test(clean)) return `${clean}.HK`;
+            }
             return clean;
         }
 
+        function inferMarketFromTicker(ticker) {
+            if (ticker.endsWith('.SS') || ticker.endsWith('.SZ') || ticker.endsWith('.BJ')) return 'CN';
+            if (ticker.endsWith('.HK')) return 'HK';
+            if (ticker.endsWith('.TW') || ticker.endsWith('.TWO')) return 'TW';
+            return 'US';
+        }
+
+        function getCurrencySymbolByTicker(ticker) {
+            if (ticker.endsWith('.SS') || ticker.endsWith('.SZ') || ticker.endsWith('.BJ')) return '¥';
+            if (ticker.endsWith('.HK')) return 'HK$';
+            if (ticker.endsWith('.TW') || ticker.endsWith('.TWO')) return 'NT$';
+            return '$';
+        }
+
         // ==========================================
-        // 2. 技術指標數學引擎 (MA / RSI / MACD / KDJ / 布林)
+        // 2. 技術指標數學計算引擎 (SMA / EMA / RSI / MACD / KDJ / 布林 / 波動率)
         // ==========================================
         function calcSMA(arr, period) {
             return arr.map((_, idx) => {
                 if (idx < period - 1) return null;
                 let sum = 0;
-                for (let j = 0; j < period; j++) sum += arr[idx - j];
-                return Number((sum / period).toFixed(3));
+                for (let j = idx - period + 1; j <= idx; j++) sum += arr[j];
+                return Number((sum / period).toFixed(4));
             });
         }
 
         function calcEMA(arr, period) {
             const k = 2 / (period + 1);
-            const res = new Array(arr.length).fill(null);
-            if (arr.length < period) return res;
-            let sum = 0;
-            for (let i = 0; i < period; i++) sum += arr[i];
-            res[period - 1] = sum / period;
-            for (let i = period; i < arr.length; i++) {
-                res[i] = arr[i] * k + res[i - 1] * (1 - k);
+            const res = [];
+            let prev = arr[0];
+            res.push(prev);
+            for (let i = 1; i < arr.length; i++) {
+                prev = arr[i] * k + prev * (1 - k);
+                res.push(prev);
             }
             return res;
         }
 
         function calcRSISeries(closes, period = 14) {
-            const res = new Array(closes.length).fill(null);
-            if (closes.length <= period) return res;
+            const rsi = new Array(closes.length).fill(null);
+            if (closes.length <= period) return rsi;
             let gains = 0, losses = 0;
             for (let i = 1; i <= period; i++) {
                 const diff = closes[i] - closes[i - 1];
@@ -452,35 +550,24 @@
             }
             let avgGain = gains / period;
             let avgLoss = losses / period;
-            res[period] = avgLoss === 0 ? 100 : Number((100 - (100 / (1 + avgGain / avgLoss))).toFixed(2));
+            rsi[period] = avgLoss === 0 ? 100 : Number((100 - 100 / (1 + avgGain / avgLoss)).toFixed(2));
 
             for (let i = period + 1; i < closes.length; i++) {
                 const diff = closes[i] - closes[i - 1];
-                avgGain = (avgGain * (period - 1) + (diff > 0 ? diff : 0)) / period;
-                avgLoss = (avgLoss * (period - 1) + (diff < 0 ? -diff : 0)) / period;
-                res[i] = avgLoss === 0 ? 100 : Number((100 - (100 / (1 + avgGain / avgLoss))).toFixed(2));
+                const g = diff > 0 ? diff : 0;
+                const l = diff < 0 ? -diff : 0;
+                avgGain = (avgGain * (period - 1) + g) / period;
+                avgLoss = (avgLoss * (period - 1) + l) / period;
+                rsi[i] = avgLoss === 0 ? 100 : Number((100 - 100 / (1 + avgGain / avgLoss)).toFixed(2));
             }
-            return res;
+            return rsi;
         }
 
-        function calcMACDSeries(closes) {
-            const ema12 = calcEMA(closes, 12);
-            const ema26 = calcEMA(closes, 26);
-            const dif = closes.map((_, i) => (ema12[i] !== null && ema26[i] !== null) ? Number((ema12[i] - ema26[i]).toFixed(4)) : null);
-
-            // 計算 DEA (信號線)
-            const dea = new Array(closes.length).fill(null);
-            const firstValidIdx = dif.findIndex(v => v !== null);
-            if (firstValidIdx !== -1 && closes.length - firstValidIdx >= 9) {
-                let sum = 0;
-                for (let i = firstValidIdx; i < firstValidIdx + 9; i++) sum += dif[i];
-                const startDeaIdx = firstValidIdx + 8;
-                dea[startDeaIdx] = Number((sum / 9).toFixed(4));
-                const k = 2 / 10;
-                for (let i = startDeaIdx + 1; i < closes.length; i++) {
-                    dea[i] = Number((dif[i] * k + dea[i - 1] * (1 - k)).toFixed(4));
-                }
-            }
+        function calcMACDSeries(closes, fast = 12, slow = 26, signal = 9) {
+            const emaFast = calcEMA(closes, fast);
+            const emaSlow = calcEMA(closes, slow);
+            const dif = closes.map((_, i) => Number((emaFast[i] - emaSlow[i]).toFixed(4)));
+            const dea = calcEMA(dif, signal).map(v => Number(v.toFixed(4)));
             return { dif, dea };
         }
 
@@ -488,11 +575,10 @@
             let k = 50;
             for (let i = 0; i < closes.length; i++) {
                 const start = Math.max(0, i - period + 1);
-                let hh = -Infinity, ll = Infinity;
-                for (let j = start; j <= i; j++) {
-                    if (highs[j] > hh) hh = highs[j];
-                    if (lows[j] < ll) ll = lows[j];
-                }
+                const sliceH = highs.slice(start, i + 1);
+                const sliceL = lows.slice(start, i + 1);
+                const hh = Math.max(...sliceH);
+                const ll = Math.min(...sliceL);
                 const rsv = hh === ll ? 50 : ((closes[i] - ll) / (hh - ll)) * 100;
                 k = (2 / 3) * k + (1 / 3) * rsv;
             }
@@ -500,55 +586,139 @@
         }
 
         function calcBollingerWidth(closes, period = 20) {
-            if (closes.length < period) return 7.09;
+            if (closes.length < period) return 5.0;
             const slice = closes.slice(-period);
             const mean = slice.reduce((a, b) => a + b, 0) / period;
             const variance = slice.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / period;
             const std = Math.sqrt(variance);
-            return Number((((4 * std) / mean) * 100).toFixed(2));
+            return mean === 0 ? 0 : Number(((4 * std) / mean * 100).toFixed(2));
         }
 
-        function calcAnnualVolatility(closes, lookback = 20) {
-            if (closes.length < 3) return 22.05;
-            const slice = closes.slice(-Math.min(closes.length, lookback + 1));
-            const rets = [];
-            for (let i = 1; i < slice.length; i++) rets.push(Math.log(slice[i] / slice[i - 1]));
-            const mean = rets.reduce((a, b) => a + b, 0) / rets.length;
-            const variance = rets.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (rets.length - 1 || 1);
+        function calcAnnualVolatility(closes, period = 20) {
+            if (closes.length <= period) return 22.05;
+            const returns = [];
+            for (let i = closes.length - period; i < closes.length; i++) {
+                if (closes[i - 1] > 0) returns.push(Math.log(closes[i] / closes[i - 1]));
+            }
+            const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+            const variance = returns.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / returns.length;
             return Number((Math.sqrt(variance) * Math.sqrt(252) * 100).toFixed(2));
         }
 
         // ==========================================
-        // 3. Yahoo Finance API 輪詢與擬真數據生成
+        // 3. 低延遲 Yahoo Finance 雙流競速引擎 (Promise.any + 防快取時間戳 + 1m日內線)
         // ==========================================
-        async function fetchStockAnalysisData() {
-            const yahooTicker = normalizeYahooSymbol(state.rawSymbol, state.market);
-            const fetchRange = state.range === '1y' ? '1y' : '6mo';
-            const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooTicker)}?range=${fetchRange}&interval=1d&includePrePost=false`;
+        async function fetchWithFastestProxy(targetUrl, timeoutMs = 4500) {
+            const bustChar = targetUrl.includes('?') ? '&' : '?';
+            const freshUrl = `${targetUrl}${bustChar}_cb=${Date.now()}`;
 
-            const proxies = [
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-                `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
+            const proxyUrls = [
+                `https://corsproxy.io/?${encodeURIComponent(freshUrl)}`,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(freshUrl)}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(freshUrl)}`
             ];
 
-            let dataset = null;
-            for (const proxy of proxies) {
+            const requests = proxyUrls.map(async (pUrl) => {
+                const ctrl = new AbortController();
+                const timer = setTimeout(() => ctrl.abort(), timeoutMs);
                 try {
-                    const ctrl = new AbortController();
-                    const timer = setTimeout(() => ctrl.abort(), 4500);
-                    const res = await fetch(proxy, { signal: ctrl.signal });
+                    const res = await fetch(pUrl, { signal: ctrl.signal, cache: 'no-store' });
                     clearTimeout(timer);
-                    if (!res.ok) continue;
-
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const json = await res.json();
-                    const result = json?.chart?.result?.[0];
-                    if (result && result.timestamp && result.indicators?.quote?.[0]) {
-                        dataset = parseYahooResult(yahooTicker, result);
-                        break;
-                    }
+                    if (!json || json.error) throw new Error('Invalid JSON payload');
+                    return json;
                 } catch (err) {
-                    // 自動切換下一組代理或備援引擎
+                    clearTimeout(timer);
+                    throw err;
                 }
+            });
+
+            return Promise.any(requests);
+        }
+
+        // 即時搜尋自動補全查詢（結合 Yahoo Search API 與內建中英字典）
+        async function queryYahooSymbolSuggestions(keyword, marketFilter) {
+            const q = keyword.trim();
+            if (!q) return [];
+
+            // 1. 先從內建精準字典快速比對
+            const localMatches = SYMBOL_DIRECTORY.filter(item => {
+                if (marketFilter !== 'ALL' && item.market !== marketFilter) return false;
+                const upperQ = q.toUpperCase();
+                return item.raw.toUpperCase().includes(upperQ) ||
+                       item.ticker.toUpperCase().includes(upperQ) ||
+                       item.name.toUpperCase().includes(upperQ);
+            }).map(item => ({
+                raw: item.raw,
+                ticker: item.ticker,
+                name: item.name,
+                market: item.market,
+                exchange: item.exchange,
+                source: '精準字典'
+            }));
+
+            // 2. 並行向 Yahoo Finance Search API 檢索全球即時標的
+            let remoteMatches = [];
+            try {
+                const searchUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(q)}&quotesCount=10&newsCount=0&enableFuzzyQuery=true`;
+                const data = await fetchWithFastestProxy(searchUrl, 2800);
+                if (Array.isArray(data?.quotes)) {
+                    remoteMatches = data.quotes
+                        .filter(qt => qt.symbol && (qt.quoteType === 'EQUITY' || qt.quoteType === 'ETF' || qt.quoteType === 'INDEX'))
+                        .map(qt => {
+                            const mkt = inferMarketFromTicker(qt.symbol);
+                            return {
+                                raw: qt.symbol.replace(/\.(SS|SZ|BJ|HK|TW|TWO)$/i, ''),
+                                ticker: qt.symbol,
+                                name: qt.shortname || qt.longname || qt.symbol,
+                                market: mkt,
+                                exchange: qt.exchDisp || qt.exchange || mkt,
+                                source: 'Yahoo'
+                            };
+                        })
+                        .filter(item => marketFilter === 'ALL' || item.market === marketFilter);
+                }
+            } catch (_) {
+                // 網路搜尋逾時則無縫使用本地精準比對結果
+            }
+
+            // 合併並依據 ticker 去重
+            const merged = [];
+            const seen = new Set();
+            for (const item of [...localMatches, ...remoteMatches]) {
+                if (!seen.has(item.ticker)) {
+                    seen.add(item.ticker);
+                    merged.push(item);
+                }
+            }
+            return merged.slice(0, 8);
+        }
+
+        async function fetchStockAnalysisData() {
+            const yahooTicker = normalizeYahooSymbol(state.rawSymbol, state.market);
+            state.resolvedYahooTicker = yahooTicker;
+            const fetchRange = state.range === '1y' ? '1y' : '6mo';
+
+            const dailyUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooTicker)}?range=${fetchRange}&interval=1d&includePrePost=false`;
+            const intradayUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooTicker)}?range=1d&interval=1m&includePrePost=true`;
+
+            let dataset = null;
+            try {
+                // 並行競速抓取日線數據與 1 分鐘日內最新 Tick（降低報價延遲）
+                const [dailyJson, intradayJson] = await Promise.all([
+                    fetchWithFastestProxy(dailyUrl, 4800),
+                    state.mode === 'realtime' ? fetchWithFastestProxy(intradayUrl, 3800).catch(() => null) : Promise.resolve(null)
+                ]);
+
+                const dailyResult = dailyJson?.chart?.result?.[0];
+                const intradayResult = intradayJson?.chart?.result?.[0];
+
+                if (dailyResult && dailyResult.timestamp && dailyResult.indicators?.quote?.[0]) {
+                    dataset = parseYahooDualStreamResult(yahooTicker, dailyResult, intradayResult);
+                }
+            } catch (_) {
+                // 若所有代理節點皆暫時無法連線，降級至確定性量化基準引擎
             }
 
             if (!dataset) {
@@ -591,15 +761,15 @@
             return dataset;
         }
 
-        function parseYahooResult(yahooTicker, result) {
-            const meta = result.meta;
-            const q = result.indicators.quote[0];
+        function parseYahooDualStreamResult(yahooTicker, dailyResult, intradayResult) {
+            const meta = dailyResult.meta;
+            const q = dailyResult.indicators.quote[0];
             const dates = [], opens = [], highs = [], lows = [], closes = [], volumes = [];
 
-            for (let i = 0; i < result.timestamp.length; i++) {
+            for (let i = 0; i < dailyResult.timestamp.length; i++) {
                 const c = q.close[i];
                 if (c == null || isNaN(c)) continue;
-                const d = new Date(result.timestamp[i] * 1000);
+                const d = new Date(dailyResult.timestamp[i] * 1000);
                 dates.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
                 opens.push(Number((q.open[i] || c).toFixed(2)));
                 highs.push(Number((q.high[i] || c).toFixed(2)));
@@ -608,21 +778,64 @@
                 volumes.push(q.volume[i] || 0);
             }
 
+            // 融合日內 1 分鐘線最新價格與成交量，消除日線延遲
+            let livePrice = meta.regularMarketPrice || closes[closes.length - 1];
+            let liveOpen = meta.regularMarketOpen || opens[opens.length - 1];
+            let liveHigh = meta.regularMarketDayHigh || highs[highs.length - 1];
+            let liveLow = meta.regularMarketDayLow || lows[lows.length - 1];
+            let liveVol = meta.regularMarketVolume || volumes[volumes.length - 1] || 0;
+            let marketTimeEpoch = meta.regularMarketTime || Math.floor(Date.now() / 1000);
+
+            if (intradayResult && intradayResult.indicators?.quote?.[0]) {
+                const iq = intradayResult.indicators.quote[0];
+                const iMeta = intradayResult.meta || {};
+                const validCloses = (iq.close || []).filter(v => v != null && !isNaN(v));
+                const validHighs = (iq.high || []).filter(v => v != null && !isNaN(v));
+                const validLows = (iq.low || []).filter(v => v != null && !isNaN(v));
+                const validOpens = (iq.open || []).filter(v => v != null && !isNaN(v));
+                const sumIntradayVol = (iq.volume || []).reduce((acc, v) => acc + (v || 0), 0);
+
+                if (validCloses.length > 0) {
+                    livePrice = iMeta.regularMarketPrice || validCloses[validCloses.length - 1];
+                    if (validOpens.length > 0) liveOpen = validOpens[0];
+                    if (validHighs.length > 0) liveHigh = Math.max(liveHigh || 0, ...validHighs);
+                    if (validLows.length > 0) liveLow = Math.min(liveLow || Infinity, ...validLows);
+                    if (sumIntradayVol > liveVol) liveVol = sumIntradayVol;
+                    if (intradayResult.timestamp?.length) {
+                        marketTimeEpoch = intradayResult.timestamp[intradayResult.timestamp.length - 1];
+                    }
+                }
+            }
+
+            // 以最新日內報價修補最後一根日 K 數據，使均線、RSI、MACD 同步反映最新秒級價格
+            if (closes.length > 0 && state.mode === 'realtime') {
+                const lastIdx = closes.length - 1;
+                closes[lastIdx] = Number(livePrice.toFixed(2));
+                opens[lastIdx] = Number(liveOpen.toFixed(2));
+                highs[lastIdx] = Number(Math.max(highs[lastIdx], liveHigh, livePrice).toFixed(2));
+                lows[lastIdx] = Number(Math.min(lows[lastIdx], liveLow, livePrice).toFixed(2));
+                if (liveVol > 0) volumes[lastIdx] = liveVol;
+            }
+
             const preset = PRESET_DB[yahooTicker] || {};
-            const mInfo = MARKET_META[state.market];
+            const dictItem = SYMBOL_DIRECTORY.find(d => d.ticker === yahooTicker);
+            const displaySym = getCurrencySymbolByTicker(yahooTicker);
+            const displayName = state.resolvedName || dictItem?.name || preset.name || meta.shortName || meta.longName || yahooTicker;
 
             return {
                 isLive: true,
+                hasIntradayTick: Boolean(intradayResult),
+                marketTimeEpoch,
                 yahooTicker,
-                rawSymbol: state.rawSymbol.toUpperCase(),
-                name: preset.name || meta.shortName || state.rawSymbol.toUpperCase(),
-                sym: mInfo.sym,
-                price: Number((meta.regularMarketPrice || closes[closes.length - 1]).toFixed(2)),
-                prevClose: Number((meta.chartPreviousClose || closes[closes.length - 2] || closes[closes.length - 1]).toFixed(2)),
-                open: Number((meta.regularMarketOpen || opens[opens.length - 1]).toFixed(2)),
-                high: Number((meta.regularMarketDayHigh || highs[highs.length - 1]).toFixed(2)),
-                low: Number((meta.regularMarketDayLow || lows[lows.length - 1]).toFixed(2)),
-                volume: meta.regularMarketVolume || volumes[volumes.length - 1] || 9497000,
+                rawSymbol: yahooTicker.replace(/\.(SS|SZ|BJ|HK|TW|TWO)$/i, ''),
+                name: displayName,
+                sym: displaySym,
+                price: Number(livePrice.toFixed(2)),
+                prevClose: Number((meta.chartPreviousClose || closes[closes.length - 2] || livePrice).toFixed(2)),
+                open: Number(liveOpen.toFixed(2)),
+                high: Number(liveHigh.toFixed(2)),
+                low: Number(liveLow.toFixed(2)),
+                volume: liveVol || 9497000,
                 turnoverRate: preset.turnoverRate || 3.45,
                 pe: preset.pe || 25.40,
                 pb: preset.pb || 3.80,
@@ -638,7 +851,8 @@
 
         function buildSimulatedDataset(yahooTicker, fetchRange) {
             const preset = PRESET_DB[yahooTicker];
-            const mInfo = MARKET_META[state.market];
+            const dictItem = SYMBOL_DIRECTORY.find(d => d.ticker === yahooTicker);
+            const displaySym = getCurrencySymbolByTicker(yahooTicker);
             const seed = yahooTicker.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
 
             const basePrice = preset ? preset.price : Number((12 + (seed % 160) + 0.35).toFixed(2));
@@ -682,10 +896,12 @@
 
             return {
                 isLive: false,
+                hasIntradayTick: false,
+                marketTimeEpoch: Math.floor(Date.now() / 1000),
                 yahooTicker,
-                rawSymbol: state.rawSymbol.toUpperCase(),
-                name: preset ? preset.name : state.rawSymbol.toUpperCase(),
-                sym: mInfo.sym,
+                rawSymbol: yahooTicker.replace(/\.(SS|SZ|BJ|HK|TW|TWO)$/i, ''),
+                name: state.resolvedName || dictItem?.name || (preset ? preset.name : yahooTicker),
+                sym: displaySym,
                 price: basePrice,
                 prevClose,
                 open,
@@ -721,14 +937,27 @@
         }
 
         function renderQuoteHeaderCard(data) {
-            const mInfo = MARKET_META[state.market];
-            const exchangeDetail = data.yahooTicker.endsWith('.SS') ? '上海證券交易所' :
-                                   data.yahooTicker.endsWith('.SZ') ? '深圳證券交易所' : mInfo.sub.split('•')[1].trim();
+            const actualMarket = inferMarketFromTicker(data.yahooTicker);
+            const mInfo = MARKET_META[actualMarket] || MARKET_META.US;
+            const exchangeDetail = data.yahooTicker.endsWith('.SS') ? '上海證券交易所 (SS)' :
+                                   data.yahooTicker.endsWith('.SZ') ? '深圳證券交易所 (SZ)' :
+                                   data.yahooTicker.endsWith('.BJ') ? '北京證券交易所 (BJ)' : mInfo.sub.split('•')[1].trim();
 
-            document.title = `${data.rawSymbol} 分析 - 量化視界`;
-            document.getElementById('quoteTitle').textContent = `${data.rawSymbol} (${data.name})`;
+            document.title = `${data.yahooTicker} ${data.name} - 量化視界`;
+            document.getElementById('quoteTitle').textContent = `${data.yahooTicker} · ${data.name}`;
             document.getElementById('quoteSubtitle').textContent = `${mInfo.sub.split('•')[0].trim()} • ${exchangeDetail}`;
-            document.getElementById('dataSourceBadge').textContent = data.isLive ? 'Yahoo Finance 即時連線' : 'Yahoo Finance 量化基準';
+
+            const sourceBadge = document.getElementById('dataSourceBadge');
+            const liveStatusEl = document.getElementById('liveConnStatus');
+            if (data.isLive) {
+                sourceBadge.textContent = data.hasIntradayTick ? 'Yahoo Finance 1m即時流' : 'Yahoo Finance 日線同步';
+                liveStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>即時行情已連線</span>`;
+                liveStatusEl.className = 'flex items-center gap-1.5 text-emerald-400 font-medium';
+            } else {
+                sourceBadge.textContent = '離線量化基準數據';
+                liveStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span><span>備援基準模式</span>`;
+                liveStatusEl.className = 'flex items-center gap-1.5 text-amber-300 font-medium';
+            }
 
             const diff = data.price - data.prevClose;
             const pct = data.prevClose ? (diff / data.prevClose) * 100 : 0;
@@ -750,10 +979,10 @@
             document.getElementById('summaryAmplitude').textContent = `${amp.toFixed(2)}%`;
             document.getElementById('summaryLow').textContent = `${data.sym}${data.low.toFixed(2)}`;
 
-            const now = new Date();
+            const tsDate = data.isLive && data.marketTimeEpoch ? new Date(data.marketTimeEpoch * 1000) : new Date();
             const timeStr = state.mode === 'history' && state.historyDate
-                ? `${state.historyDate} 15:00`
-                : `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                ? `${state.historyDate} 15:00:00`
+                : `${tsDate.getFullYear()}-${String(tsDate.getMonth() + 1).padStart(2, '0')}-${String(tsDate.getDate()).padStart(2, '0')} ${String(tsDate.getHours()).padStart(2, '0')}:${String(tsDate.getMinutes()).padStart(2, '0')}:${String(tsDate.getSeconds()).padStart(2, '0')}`;
             document.getElementById('summaryUpdateTime').textContent = timeStr;
 
             updateWatchlistUI(data);
@@ -1098,27 +1327,31 @@
         // ==========================================
         // 5. 自選股管理與互動控制邏輯
         // ==========================================
+        // 5. 自選股管理、自動補全下拉選單與 15 秒即時輪詢
+        // ==========================================
         function updateWatchlistUI(currentData) {
             const bar = document.getElementById('watchlistBar');
             bar.innerHTML = state.watchlist.map(item => `
-                <button type="button" data-sym="${item.symbol}" data-mkt="${item.market}"
-                    class="wl-chip px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${item.symbol === state.rawSymbol && item.market === state.market ? 'bg-white text-indigo-700 font-bold shadow-xs' : 'bg-white/20 hover:bg-white/30 text-white'}">
+                <button type="button" data-sym="${item.symbol}" data-ticker="${item.ticker || ''}" data-mkt="${item.market}"
+                    class="wl-chip px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${(item.ticker || item.symbol) === currentData.yahooTicker ? 'bg-white text-indigo-700 font-bold shadow-xs' : 'bg-white/20 hover:bg-white/30 text-white'}">
                     ${item.label}
                 </button>
             `).join('');
 
             bar.querySelectorAll('.wl-chip').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    state.rawSymbol = btn.getAttribute('data-sym');
+                    const tkr = btn.getAttribute('data-ticker');
+                    state.rawSymbol = tkr || btn.getAttribute('data-sym');
                     state.market = btn.getAttribute('data-mkt');
-                    document.getElementById('symbolInput').value = state.rawSymbol;
+                    state.resolvedName = '';
+                    document.getElementById('symbolInput').value = btn.getAttribute('data-sym');
                     document.getElementById('marketSelect').value = state.market;
                     runFullAnalysis();
                 });
             });
 
             const toggleBtn = document.getElementById('watchlistToggleBtn');
-            const exists = state.watchlist.some(w => w.symbol === state.rawSymbol && w.market === state.market);
+            const exists = state.watchlist.some(w => (w.ticker || w.symbol) === currentData.yahooTicker);
             if (exists) {
                 toggleBtn.className = 'px-3 py-1.5 text-xs font-medium rounded border border-amber-400 text-amber-600 bg-amber-50 hover:bg-amber-100 transition-colors flex items-center gap-1.5 cursor-pointer';
                 toggleBtn.innerHTML = `<i class="fa-solid fa-star"></i><span>已在自選</span>`;
@@ -1128,24 +1361,69 @@
             }
 
             toggleBtn.onclick = () => {
-                const idx = state.watchlist.findIndex(w => w.symbol === state.rawSymbol && w.market === state.market);
+                const idx = state.watchlist.findIndex(w => (w.ticker || w.symbol) === currentData.yahooTicker);
                 if (idx >= 0) {
                     state.watchlist.splice(idx, 1);
                 } else {
                     state.watchlist.push({
-                        symbol: state.rawSymbol,
-                        market: state.market,
-                        label: `${state.rawSymbol} ${currentData.name}`
+                        symbol: currentData.rawSymbol,
+                        ticker: currentData.yahooTicker,
+                        market: inferMarketFromTicker(currentData.yahooTicker),
+                        label: `${currentData.rawSymbol} ${currentData.name.split(' ')[0]}`
                     });
                 }
-                localStorage.setItem('finanalyzer_watchlist', JSON.stringify(state.watchlist));
+                localStorage.setItem('quantvision_watchlist_v2', JSON.stringify(state.watchlist));
                 updateWatchlistUI(currentData);
             };
         }
 
-        async function runFullAnalysis() {
+        function renderSearchDropdown(items) {
+            const dropdown = document.getElementById('searchDropdown');
+            if (!items || items.length === 0) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+            dropdown.innerHTML = items.map(item => `
+                <button type="button" data-ticker="${item.ticker}" data-raw="${item.raw}" data-market="${item.market}" data-name="${item.name}"
+                    class="search-option w-full px-3.5 py-2 flex items-center justify-between hover:bg-blue-50 transition-colors text-left cursor-pointer">
+                    <div>
+                        <div class="text-xs font-bold text-gray-800">${item.ticker} <span class="font-normal text-gray-600 ml-1">${item.name}</span></div>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">${item.exchange}</span>
+                    </div>
+                </button>
+            `).join('');
+            dropdown.classList.remove('hidden');
+
+            dropdown.querySelectorAll('.search-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    const ticker = opt.getAttribute('data-ticker');
+                    const mkt = opt.getAttribute('data-market');
+                    const name = opt.getAttribute('data-name');
+                    state.rawSymbol = ticker;
+                    state.market = mkt;
+                    state.resolvedName = name;
+                    document.getElementById('symbolInput').value = ticker;
+                    document.getElementById('marketSelect').value = mkt;
+                    dropdown.classList.add('hidden');
+                    runFullAnalysis();
+                });
+            });
+        }
+
+        function resetAutoRefreshTimer() {
+            if (state.refreshTimer) clearInterval(state.refreshTimer);
+            if (state.autoRefresh && state.mode === 'realtime') {
+                state.refreshTimer = setInterval(() => {
+                    runFullAnalysis(true);
+                }, 15000);
+            }
+        }
+
+        async function runFullAnalysis(isBackground = false) {
             const refreshIcon = document.getElementById('refreshIcon');
-            refreshIcon.classList.add('fa-spin');
+            if (!isBackground) refreshIcon.classList.add('fa-spin');
 
             const data = await fetchStockAnalysisData();
             renderQuoteHeaderCard(data);
@@ -1153,7 +1431,7 @@
             renderOrderFlowCard(data);
             renderDetailedIndicatorsCard(data);
 
-            setTimeout(() => refreshIcon.classList.remove('fa-spin'), 350);
+            setTimeout(() => refreshIcon.classList.remove('fa-spin'), 300);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -1164,6 +1442,51 @@
             dateInput.value = yStr;
             state.historyDate = yStr;
 
+            const symbolInput = document.getElementById('symbolInput');
+            const clearBtn = document.getElementById('clearInputBtn');
+            const dropdown = document.getElementById('searchDropdown');
+
+            // 輸入框即時模糊檢索 (防抖 280ms)
+            symbolInput.addEventListener('input', (e) => {
+                const val = e.target.value;
+                clearBtn.classList.toggle('hidden', !val);
+                clearTimeout(state.searchDebounceTimer);
+                if (!val.trim()) {
+                    dropdown.classList.add('hidden');
+                    return;
+                }
+                state.searchDebounceTimer = setTimeout(async () => {
+                    const results = await queryYahooSymbolSuggestions(val, document.getElementById('marketSelect').value);
+                    renderSearchDropdown(results);
+                }, 280);
+            });
+
+            symbolInput.addEventListener('focus', async () => {
+                if (symbolInput.value.trim()) {
+                    const results = await queryYahooSymbolSuggestions(symbolInput.value, document.getElementById('marketSelect').value);
+                    renderSearchDropdown(results);
+                }
+            });
+
+            clearBtn.addEventListener('click', () => {
+                symbolInput.value = '';
+                clearBtn.classList.add('hidden');
+                dropdown.classList.add('hidden');
+                symbolInput.focus();
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!symbolInput.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+
+            // 15 秒自動刷新開關
+            document.getElementById('autoRefreshToggle').addEventListener('change', (e) => {
+                state.autoRefresh = e.target.checked;
+                resetAutoRefreshTimer();
+            });
+
             // 數據模式切換 (顯示/隱藏日期選擇器)
             document.getElementById('dataModeSelect').addEventListener('change', (e) => {
                 state.mode = e.target.value;
@@ -1172,6 +1495,7 @@
                 } else {
                     dateInput.classList.add('hidden');
                 }
+                resetAutoRefreshTimer();
             });
 
             dateInput.addEventListener('change', (e) => {
@@ -1181,16 +1505,19 @@
             // 搜尋表單提交
             document.getElementById('searchForm').addEventListener('submit', (e) => {
                 e.preventDefault();
-                const sym = document.getElementById('symbolInput').value.trim().toUpperCase();
+                const sym = symbolInput.value.trim();
                 if (!sym) return;
+                dropdown.classList.add('hidden');
                 state.rawSymbol = sym;
                 state.market = document.getElementById('marketSelect').value;
                 state.mode = document.getElementById('dataModeSelect').value;
+                state.resolvedName = '';
                 runFullAnalysis();
+                resetAutoRefreshTimer();
             });
 
             // 刷新按鈕
-            document.getElementById('refreshBtn').addEventListener('click', runFullAnalysis);
+            document.getElementById('refreshBtn').addEventListener('click', () => runFullAnalysis(false));
 
             // 圖表區間按鈕 (3個月 / 6個月 / 1年)
             document.querySelectorAll('.range-btn').forEach(btn => {
@@ -1205,8 +1532,9 @@
                 });
             });
 
-            // 首次載入預設標的 002060
+            // 首次載入預設標的 002060 並啟動 15 秒低延遲輪詢
             runFullAnalysis();
+            resetAutoRefreshTimer();
         });
     </script>
 </body>
